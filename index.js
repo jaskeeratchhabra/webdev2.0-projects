@@ -1,17 +1,15 @@
 //modules
 const mongoose = require('mongoose');
 const express = require("express");
-const http = require('http');
+
 const path = require("path");
 //creating node app
 const app = express();
 //creating server
-const server = http.createServer(app);
+
 app.use(express.urlencoded(true))
 //connecting to mongoDb
-let URI = "mongodb+srv://jaskeerat:jaskeeratpassword@cluster0.x6f1v.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
 // let URI = "mongodb://localhost:27017/botDb";
-mongoose.connect(URI);
 app.use(express.urlencoded(true))
 //initializing static directory
 app.use(express.static(__dirname + '/static/'));
@@ -20,14 +18,22 @@ app.set('view engine', 'pug')
 // Set the views directory
 app.set('views', path.join(__dirname, 'views'))
 //checking connection with mongoDb
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'connection error:'), () => {
-    console.log("error in connection to database");
-});
-db.once('open', function () {
-    // we're connected!
-    console.log(" connected to database");
-});
+try{
+    let URI = "mongodb+srv://jaskeerat:jaskeeratpassword@cluster0.x6f1v.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
+    mongoose.connect(URI);
+    const db = mongoose.connection;
+    db.on('error', console.error.bind(console, 'connection error:'), () => {
+        console.log("error in connection to database");
+    });
+    db.once('open', function () {
+        // we're connected!
+        console.log(" connected to database");
+    });
+}
+catch(e)
+{
+    console.log(e); 
+}
 //schemas
 const StudentIdSchema = new mongoose.Schema({
     StudentID: String,
@@ -95,11 +101,19 @@ app.get('/details', (req, res) => {
         }
     })
 });
-
+app.get('/addDetails', (req, res) => {
+    var myData = new questions(req.body);
+    myData.save().then(() => {
+        res.status(200).render('addDetails');
+    }).catch(() => {
+        res.status(200).render('404');
+    });
+});
 //post method
 app.post('/addDetails', (req, res) => {
     var myData = new questions(req.body);
     myData.save().then(() => {
+        console.log("Question added successfully!")
         res.status(200).render('addDetails');
     }).catch(() => {
         res.status(200).render('404');
@@ -166,29 +180,29 @@ app.post('/', (req, res) => {
         }
     });
 })
-app.post('/login', (req, res) => {
-    let username = (req.body.username).toUpperCase();
-    let password = (req.body.password).toUpperCase();
-    console.log(username);
-    console.log(password);
-    admin.findOne({
-        AdminName: username,
-        Password: password
-    }, function (err, data) {
-        if (err) {
-            console.log(err);
-        } else {
-            if (data) {
-                //data is the object
-                res.status(200).render('addDetails'); //rendering the login page
-            } else {
-                console.log(err);
-                res.status(200).render('login');
-            }
-        }
-    });
-})
+// app.post('/login', (req, res) => {
+//     let username = (req.body.username).toUpperCase();
+//     let password = (req.body.password).toUpperCase();
+//     console.log(username);
+//     console.log(password);
+//     admin.findOne({
+//         AdminName: username,
+//         Password: password
+//     }, function (err, data) {
+//         if (err) {
+//             console.log(err);
+//         } else {
+//             if (data) {
+//                 //data is the object
+//                 res.status(200).render('addDetails'); //rendering the login page
+//             } else {
+//                 console.log(err);
+//                 res.status(200).render('login');
+//             }
+//         }
+//     });
+// })
 //port
 const PORT = process.env.PORT || 9000;
 //starting the server       
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
